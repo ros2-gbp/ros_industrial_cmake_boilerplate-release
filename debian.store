@@ -1,1 +1,1 @@
-{"base": "ee44db2", "parent": "debian/rolling/ros_industrial_cmake_boilerplate", "previous": "b0539e4", "trim": "", "trimbase": ""}
+{"base": "227299b", "parent": "debian/iron/ros_industrial_cmake_boilerplate", "previous": "5eb2728", "trim": "", "trimbase": ""}

@@ -208,4 +208,5 @@ tracks:
     ros_distro: rolling
     vcs_type: git
     vcs_uri: https://github.com/ros-industrial/ros_industrial_cmake_boilerplate.git
-    version: :{auto}
+    version: 0.5.4
+    version_saved: :{auto}

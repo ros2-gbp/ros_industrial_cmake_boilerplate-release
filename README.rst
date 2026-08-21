@@ -51,6 +51,28 @@ It will create two cmake variable **${PREFIX_ARG}_extracted_name** and **${PREFI
 Clang Tidy
 ==========
 
+This CMake macro will add clang-tidy to all targets
+
+.. code-block:: cmake
+
+   clang_tidy(ARGUMENTS ${ARGN})
+   # or
+   clang_tidy(ARGUMENTS ${ARGN} ENABLE ${USER_ENABLE_ARG})
+
+This CMake macro will add clang-tidy to all targets with default arguments.
+
+.. code-block:: cmake
+
+   clang_tidy(ARGUMENTS ${DEFAULT_CLANG_TIDY_CHECKS})
+   # or
+   clang_tidy(ARGUMENTS ${DEFAULT_CLANG_TIDY_CHECKS} ENABLE ${USER_ENABLE_ARG})
+
+Clears clang-tidy so it is not called on any following defined code compilation. It can be re-enabled by another call to `clang_tidy()`.
+
+.. code-block:: cmake
+
+   reset_clang_tidy()
+
 This CMake macro will add clang-tidy to a provided target.
 
 - `The clang-tidy documentation <https://clang.llvm.org/extra/clang-tidy/>`_
@@ -159,13 +181,22 @@ This CMake macro will add IWYU to all targets
 .. code-block:: cmake
 
    include_what_you_use(ARGUMENTS ${ARGN})
+   # or
+   include_what_you_use(ARGUMENTS ${ARGN} ENABLE ${USER_ENABLE_ARG})
 
 This CMake macro will add IWYU to all targets with default arguments.
 
 .. code-block:: cmake
 
    include_what_you_use(ARGUMENTS ${DEFAULT_IWYU_ARGS})
+   # or
+   include_what_you_use(ARGUMENTS ${DEFAULT_IWYU_ARGS} ENABLE ${USER_ENABLE_ARG})
 
+Clears IWYU so it is not called on any following defined code compilation. It can be re-enabled by another call to `include_what_you_use()`.
+
+.. code-block:: cmake
+
+   reset_include_what_you_use()
 
 CppCheck
 ========
@@ -193,13 +224,59 @@ This CMake macro will add CppCheck to all targets
 .. code-block:: cmake
 
    cppcheck(ARGUMENTS ${ARGN})
-
+   # or
+   cppcheck(ARGUMENTS ${ARGN} ENABLE ${USER_ENABLE_ARG})
 
 This CMake macro will add CppCheck to all targets with default arguments.
 
 .. code-block:: cmake
 
    cppcheck(ARGUMENTS ${DEFAULT_CPPCHECK_ARGS})
+   # or
+   cppcheck(ARGUMENTS ${DEFAULT_CPPCHECK_ARGS} ENABLE ${USER_ENABLE_ARG})
+
+Clears CppCheck so it is not called on any following defined code compilation. It can be re-enabled by another call to `cppcheck()`.
+
+.. code-block:: cmake
+
+   reset_cppcheck()
+
+Sanitizer Tools
+===============
+
+Sanitizers are tools that perform checks during a program’s runtime and returns issues, and as such, along with unit testing, code coverage and static analysis, is another tool to add to the programmers toolbox. And of course, like the previous tools, are tragically simple to add into any project using CMake, allowing any project and developer to quickly and easily use.
+
+A quick rundown of the tools available, and what they do:
+
+* `LeakSanitizer <https://clang.llvm.org/docs/LeakSanitizer.html>`_  detects memory leaks, or issues where memory is allocated and never deallocated, causing programs to slowly consume more and more memory, eventually leading to a crash.
+* `AddressSanitizer <https://clang.llvm.org/docs/AddressSanitizer.html>`_  is a fast memory error detector. It is useful for detecting most issues dealing with memory, such as:
+   * Out of bounds accesses to heap, stack, global
+   * Use after free
+   * Use after return
+   * Use after scope
+   * Double-free, invalid free
+   * Memory leaks (using LeakSanitizer)
+* `ThreadSanitizer <https://clang.llvm.org/docs/ThreadSanitizer.html>`_  detects data races for multi-threaded code.
+* `UndefinedBehaviourSanitizer <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>`_  detects the use of various features of C/C++ that are explicitly listed as resulting in undefined behaviour. Most notably: 
+   * Using misaligned or null pointer.
+   * Signed integer overflow
+   * Conversion to, from, or between floating-point types which would overflow the destination
+   * Division by zero
+   * Unreachable code
+* `MemorySanitizer <https://clang.llvm.org/docs/MemorySanitizer.html>`_  detects uninitialized reads.
+* `Control Flow Integrity <https://clang.llvm.org/docs/ControlFlowIntegrity.html>`_  is designed to detect certain forms of undefined behaviour that can potentially allow attackers to subvert the program's control flow.
+
+These are used by declaring the :code:`USE_SANITIZER` CMake variable as string containing any of:
+
+* Address
+* Memory
+* MemoryWithOrigins
+* Undefined
+* Thread
+* Leak
+* CFI
+
+Multiple values are allowed, e.g. :code:`-DUSE_SANITIZER=Address,Leak` but some sanitizers cannot be combined together, e.g. :code:`-DUSE_SANITIZER=Address,Memory` will result in configuration error. The delimeter character is not required and :code:`-DUSE_SANITIZER=AddressLeak` would work as well.
 
 CPack
 =====

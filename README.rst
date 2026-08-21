@@ -51,6 +51,28 @@ It will create two cmake variable **${PREFIX_ARG}_extracted_name** and **${PREFI
 Clang Tidy
 ==========
 
+This CMake macro will add clang-tidy to all targets
+
+.. code-block:: cmake
+
+   clang_tidy(ARGUMENTS ${ARGN})
+   # or
+   clang_tidy(ARGUMENTS ${ARGN} ENABLE ${USER_ENABLE_ARG})
+
+This CMake macro will add clang-tidy to all targets with default arguments.
+
+.. code-block:: cmake
+
+   clang_tidy(ARGUMENTS ${DEFAULT_CLANG_TIDY_CHECKS})
+   # or
+   clang_tidy(ARGUMENTS ${DEFAULT_CLANG_TIDY_CHECKS} ENABLE ${USER_ENABLE_ARG})
+
+Clears clang-tidy so it is not called on any following defined code compilation. It can be re-enabled by another call to `clang_tidy()`.
+
+.. code-block:: cmake
+
+   reset_clang_tidy()
+
 This CMake macro will add clang-tidy to a provided target.
 
 - `The clang-tidy documentation <https://clang.llvm.org/extra/clang-tidy/>`_
@@ -159,13 +181,22 @@ This CMake macro will add IWYU to all targets
 .. code-block:: cmake
 
    include_what_you_use(ARGUMENTS ${ARGN})
+   # or
+   include_what_you_use(ARGUMENTS ${ARGN} ENABLE ${USER_ENABLE_ARG})
 
 This CMake macro will add IWYU to all targets with default arguments.
 
 .. code-block:: cmake
 
    include_what_you_use(ARGUMENTS ${DEFAULT_IWYU_ARGS})
+   # or
+   include_what_you_use(ARGUMENTS ${DEFAULT_IWYU_ARGS} ENABLE ${USER_ENABLE_ARG})
 
+Clears IWYU so it is not called on any following defined code compilation. It can be re-enabled by another call to `include_what_you_use()`.
+
+.. code-block:: cmake
+
+   reset_include_what_you_use()
 
 CppCheck
 ========
@@ -193,29 +224,238 @@ This CMake macro will add CppCheck to all targets
 .. code-block:: cmake
 
    cppcheck(ARGUMENTS ${ARGN})
-
+   # or
+   cppcheck(ARGUMENTS ${ARGN} ENABLE ${USER_ENABLE_ARG})
 
 This CMake macro will add CppCheck to all targets with default arguments.
 
 .. code-block:: cmake
 
    cppcheck(ARGUMENTS ${DEFAULT_CPPCHECK_ARGS})
+   # or
+   cppcheck(ARGUMENTS ${DEFAULT_CPPCHECK_ARGS} ENABLE ${USER_ENABLE_ARG})
+
+Clears CppCheck so it is not called on any following defined code compilation. It can be re-enabled by another call to `cppcheck()`.
+
+.. code-block:: cmake
+
+   reset_cppcheck()
+
+Sanitizer Tools
+===============
+
+Sanitizers are tools that perform checks during a program’s runtime and returns issues, and as such, along with unit testing, code coverage and static analysis, is another tool to add to the programmers toolbox. And of course, like the previous tools, are tragically simple to add into any project using CMake, allowing any project and developer to quickly and easily use.
+
+A quick rundown of the tools available, and what they do:
+
+* `LeakSanitizer <https://clang.llvm.org/docs/LeakSanitizer.html>`_  detects memory leaks, or issues where memory is allocated and never deallocated, causing programs to slowly consume more and more memory, eventually leading to a crash.
+* `AddressSanitizer <https://clang.llvm.org/docs/AddressSanitizer.html>`_  is a fast memory error detector. It is useful for detecting most issues dealing with memory, such as:
+   * Out of bounds accesses to heap, stack, global
+   * Use after free
+   * Use after return
+   * Use after scope
+   * Double-free, invalid free
+   * Memory leaks (using LeakSanitizer)
+* `ThreadSanitizer <https://clang.llvm.org/docs/ThreadSanitizer.html>`_  detects data races for multi-threaded code.
+* `UndefinedBehaviourSanitizer <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>`_  detects the use of various features of C/C++ that are explicitly listed as resulting in undefined behaviour. Most notably: 
+   * Using misaligned or null pointer.
+   * Signed integer overflow
+   * Conversion to, from, or between floating-point types which would overflow the destination
+   * Division by zero
+   * Unreachable code
+* `MemorySanitizer <https://clang.llvm.org/docs/MemorySanitizer.html>`_  detects uninitialized reads.
+* `Control Flow Integrity <https://clang.llvm.org/docs/ControlFlowIntegrity.html>`_  is designed to detect certain forms of undefined behaviour that can potentially allow attackers to subvert the program's control flow.
+
+These are used by declaring the :code:`USE_SANITIZER` CMake variable as string containing any of:
+
+* Address
+* Memory
+* MemoryWithOrigins
+* Undefined
+* Thread
+* Leak
+* CFI
+
+Multiple values are allowed, e.g. :code:`-DUSE_SANITIZER=Address,Leak` but some sanitizers cannot be combined together, e.g. :code:`-DUSE_SANITIZER=Address,Memory` will result in configuration error. The delimeter character is not required and :code:`-DUSE_SANITIZER=AddressLeak` would work as well.
+
+CPack
+=====
+
+Configure Package Without Components
+------------------------------------
+Configure package for cpack which does not leverage components
+
+* One Value Args:
+   * VERSION          - The package version
+   * MAINTAINER_NAME  - The package maintainer name
+   * MAINTAINER_EMAIL - The package maintainer email
+   * VENDOR           - The package vender
+   * DESCRIPTION      - The package description
+   * LICENSE_FILE     - The package license file
+   * README_FILE      - The package readme
+   * PACKAGE_PREFIX   - The package prefix applied to all cpack generated files
+* Multi Value Args:
+   * LINUX_BUILD_DEPENDS   - The linux build dependencies required via apt install (If not provided LINUX_DEPENDS is used)
+   * WINDOWS_BUILD_DEPENDS - The windows build dependencies required via nuget install (If not provided WINDOWS_DEPENDS is used)
+   * LINUX_DEPENDS         - The linux dependencies required via apt install
+   * WINDOWS_DEPENDS       - The windows dependencies required via nuget install
+
+.. code-block:: cmake
+
+   cpack(
+     VERSION ${pkg_extracted_version}
+     MAINTAINER <https://github.com/ros-industrial-consortium/tesseract>
+     DESCRIPTION ${pkg_extracted_description}
+     LICENSE_FILE ${CMAKE_CURRENT_LIST_DIR}/../LICENSE
+     README_FILE ${CMAKE_CURRENT_LIST_DIR}/../README.md
+     LINUX_DEPENDS
+       "libboost-system-dev"
+       "libboost-filesystem-dev"
+       "libboost-serialization-dev"
+       "libconsole-bridge-dev"
+       "libtinyxml2-dev"
+       "libeigen3-dev"
+       "libyaml-cpp-dev"
+     WINDOWS_DEPENDS
+       "boost_system"
+       "boost_filesystem;"
+       "boost_serialization"
+       "console-bridge"
+       "tinyxml2"
+       "Eigen3"
+       "yaml-cpp")
+
+Configure Package With Components
+---------------------------------
+This requires two macros one used in the components cmake file another for the top most package cmake file.
+
+Configure Component
+^^^^^^^^^^^^^^^^^^^
+Configure components for cpack
+
+* One Value Args:
+   * COMPONENT      - The component name
+   * VERSION        - The package version
+   * DESCRIPTION    - The package description
+   * PACKAGE_PREFIX - The package prefix applied to all cpack generated files
+* Multi Value Args:
+   * LINUX_BUILD_DEPENDS   - The linux build dependencies required via apt install (If not provided LINUX_DEPENDS is used)
+   * WINDOWS_BUILD_DEPENDS - The windows build dependencies required via nuget install (If not provided WINDOWS_DEPENDS is used)
+   * LINUX_DEPENDS         - The linux dependencies required via apt install
+   * WINDOWS_DEPENDS       - The windows dependencies required via nuget install
+   * COMPONENT_DEPENDS     - The component dependencies required from this package
+
+.. code-block:: cmake
+
+   cpack_component(
+     COMPONENT IKFAST # must be uppercase
+     VERSION ${pkg_extracted_version}
+     DESCRIPTION "Tesseract Kinematics ikfast implementation"
+     COMPONENT_DEPENDS core)
+
+Configure Components Package
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure package leveraging components for cpack
+
+* One Value Args:
+   * VERSION          - The package version
+   * MAINTAINER_NAME  - The package maintainer name
+   * MAINTAINER_EMAIL - The package maintainer email
+   * VENDOR           - The package vender
+   * DESCRIPTION      - The package description
+   * LICENSE_FILE     - The package license file
+   * README_FILE      - The package readme
+   * PACKAGE_PREFIX   - The package prefix applied to all cpack generated files
+* Multi Value Args:
+   * COMPONENT_DEPENDS - The component dependencies required from this package
+
+.. code-block:: cmake
+
+   cpack_component_package(
+     VERSION ${pkg_extracted_version}
+     MAINTAINER <https://github.com/ros-industrial-consortium/tesseract>
+     DESCRIPTION ${pkg_extracted_description}
+     LICENSE_FILE ${CMAKE_CURRENT_LIST_DIR}/../LICENSE
+     README_FILE ${CMAKE_CURRENT_LIST_DIR}/../README.md)
+
+
+Configure Debian Source Package
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Create debian source package leveraging cpack for upload to ppa like launchpad.net
+
+* One Value Args:
+   * CHANGLELOG (Required)         - The file path to the package CHANGELOG.rst
+   * PACKAGE_PREFIX (Optional)     - The package prefix applied to all cpack generated files
+   * UPLOAD (Optional)             - Indicate if it should be uploaded to ppa
+   * DEBIAN_INCREMENT              - The debian increment to be used, default is zero
+   * DPUT_HOST (Optional/Required) - The ppa to upload to. Only required if UPLOAD is enabled
+   * DPUT_CONFIG_IN (Optional)     - The dput config.in file. If not provide one is created.
+* Multi Value Args:
+   * DISTRIBUTIONS - The linux distrabution to deploy
+* Leveraged CPack Variable: When using the cpack macros above these are automatically set
+   * CPACK_PACKAGE_DESCRIPTION (Required)
+   * CPACK_PACKAGE_VERSION (Required)
+   * CPACK_PACKAGE_DESCRIPTION_FILE (Optional)
+   * CPACK_SOURCE_IGNORE_FILES (Optional)
+   * CPACK_DEBIAN_PACKAGE_NAME (Required)
+   * CPACK_DEBIAN_PACKAGE_SECTION (Required)
+   * CPACK_DEBIAN_PACKAGE_PRIORITY (Required)
+   * CPACK_DEBIAN_PACKAGE_MAINTAINER (Required)
+   * CPACK_DEBIAN_PACKAGE_MAINTAINER_NAME (Required)
+   * CPACK_DEBIAN_PACKAGE_MAINTAINER_EMAIL (Required)
+   * CPACK_DEBIAN_PACKAGE_ARCHITECTURE (Required)
+   * CPACK_DEBIAN_PACKAGE_DESCRIPTION (Optional)
+   * CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS (Optional)
+   * CPACK_DEBIAN_PACKAGE_DEPENDS (Optional)
+   * CPACK_DEBIAN_PACKAGE_HOMEPAGE (Optional)
+   * CPACK_COMPONENT_<COMPONENT>_DEPENDS (Reqired if components exist and enabled)
+   * CPACK_DEBIAN_<COMPONENT>_PACKAGE_ARCHITECTURE (Reqired if components exist and enabled)
+   * CPACK_DEBIAN_<COMPONENT>_DESCRIPTION (Reqired if components exist and enabled)
+   * CPACK_DEBIAN_<COMPONENT>_PACKAGE_ARCHITECTURE (Reqired if components exist and enabled)
+   * CPACK_DEBIAN_<COMPONENT>_PACKAGE_DEPENDS (Reqired if components exist and enabled)
+   * CPACK_DEBIAN_<COMPONENT>_PACKAGE_BUILD_DEPENDS (Reqired if components exist and enabled)
+
+
+.. code-block:: cmake
+
+   cpack_debian_source_package(
+     CHANGLELOG ${CMAKE_CURRENT_LIST_DIR}/CHANGELOG.rst
+     UPLOAD ${RICB_PACKAGE_SOURCE_UPLOAD}
+     DPUT_HOST ${RICB_PACKAGE_SOURCE_DPUT_HOST}
+     DEBIAN_INCREMENT ${RICB_PACKAGE_SOURCE_DEBIAN_INCREMENT}
+     DISTRIBUTIONS ${RICB_PACKAGE_SOURCE_DISTRIBUTIONS}
+   )
 
 
 Configure (Pure CMake Package)
 ==============================
 This CMake macro simplifies the CMake package configure and install by performing multiple operations
 
-* It installs the provided targets
-* It exports the provided targets under the provided namespace
-* It installs the package.xml file
-* It creates and installs the ${PROJECT_NAME}-config.cmake and ${PROJECT_NAME}-config-version.cmake
+Configure Package
+-----------------
+Performs multiple operation so other packages may find a package
+
+If Namespace is provided but no targets it is assumed targets were installed and must be exported
+
+* One Value Args:
+   * NAMESPACE - This will prepend <namespace>:: to the target names as they are written to the import file
+* Multi Value Args:
+   * TARGETS      - The targets from the project to be installed
+   * COMPONENTS   - The packages supported find_package components if any
+   * DEPENDENCIES - The dependencies to be written to the packages Config.cmake file
+   * CFG_EXTRAS   - The extra cmake files to be include in the packages Config.cmake file
+* Usage:
+   * It installs the provided targets
+   * It exports the provided targets under the provided namespace
+   * It installs the package.xml file
+   * It creates and installs the ${PROJECT_NAME}-config.cmake and ${PROJECT_NAME}-config-version.cmake
 
 .. code-block:: cmake
 
    configure_package(
      NAMESPACE <PACKAGE_NAMESPACE>
      TARGETS <TARGET_NAME_A> <TARGET_NAME_B>
+     COMPONENTS <COMPONENT_NAME_A> <COMPONENT_NAME_B>
      DEPENDENCIES <deps>...
      CFG_EXTRAS <cmake files>...
    )
@@ -245,13 +485,75 @@ arguments listed by ``DEPENDENCIES``. Additional configuration CMake scripts can
 with relative paths listed in the ``CFG_EXTRAS`` argument. The scripts should be installed alongside
 the generated package config file, in ``lib/cmake/${PROJECT_NAME}``.
 
+
+Configure Component
+-------------------
+Performs multiple operation so other packages may find a package's component
+
+If Namespace is provided but no targets it is assumed targets were installed and must be exported
+
+* One Value Args:
+   * NAMESPACE - This will prepend <namespace>:: to the target names as they are written to the import file
+   * COMPONENT - The component name
+* Multi Value Args:
+   * TARGETS      - The targets from the project to be installed
+   * DEPENDENCIES - The dependencies to be written to the packages Config.cmake file
+   * CFG_EXTRAS   - The extra cmake files to be include in the packages Config.cmake file
+* Usage:
+   * It installs the provided targets
+   * It exports the provided targets under the provided namespace
+
+.. code-block:: cmake
+
+   configure_component(
+     COMPONENT <COMPONENT_NAME>
+     NAMESPACE <PACKAGE_NAMESPACE>
+     TARGETS <TARGET_NAME_A> <TARGET_NAME_B>
+     DEPENDENCIES <deps>...
+     CFG_EXTRAS <cmake files>...
+   )
+
+Example:
+
+.. code-block:: cmake
+
+   configure_component(
+     COMPONENT
+       kdl
+     NAMESPACE
+       tesseract
+     TARGETS
+       ${PROJECT_NAME}_kdl ${PROJECT_NAME}_kdl_factories
+     DEPENDENCIES
+       Eigen3
+       TinyXML2
+       yaml-cpp
+       "Boost COMPONENTS system filesystem serialization"
+     CFG_EXTRAS
+       cmake/tesseract_common-extras.cmake
+   )
+
+To create the config cmake file, the macro by default looks for a configuration template
+``cmake/<COMPONENT_NAME>-config.cmake.in`` provided by the package. If not present, a default one
+will be generated. If generated automatically, package dependencies will be included from the
+arguments listed by ``DEPENDENCIES``. Additional configuration CMake scripts can also be included
+with relative paths listed in the ``CFG_EXTRAS`` argument. The scripts should be installed alongside
+the generated package config file, in ``lib/cmake/${PROJECT_NAME}``.
+
+
 Sub macros used in configure the package
 ----------------------------------------
 The following macros are used by configure_package and can be used independently if needed
 
 Install Targets
 ^^^^^^^^^^^^^^^
-This will install along with export them to ${PROJECT_NAME}-targets
+This will install targets along associated with the provided component and export them to ${ARG_COMPONENT}-targets
+
+* One Value Args:
+   * COMPONENT (Optional) - The component name to associate the targets with, if not provided ${PROJECT_NAME} is used
+* Multi Value Args:
+   * TARGETS - The targets from the project to be installed
+
 
 .. code-block:: cmake
 
@@ -267,21 +569,50 @@ This will install the package.xml file
 
 Generate CMake Config Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This will generate and install CMake config files.
+Performs multiple operation so other packages may find a package and package components
+The default export name is ${PROJECT_NAME} but it can be overriden by providing EXPORT_NAME
+
+* Options:
+   * EXPORT    - indicate if trargets should be exported
+* One Value Args:
+   * COMPONENT (Optional)   - the name given to the export ${ARG_COMPONENT}-targets, if not provided PROJECT_NAME is used
+   * CONFIG_NAME (Optional) - the name given to the export ${ARG_COMPONENT}-config.cmake, if not provided COMPONENT is used
+   * NAMESPACE (Optional)   - the namespace assigned for exported targets
+* Multi Value Args:
+   * DEPENDENCIES (Optional)         - list of dependencies to be loaded in the package config
+   * CFG_EXTRAS (Optional)           - list of extra cmake config files to be loaded in package config
+   * SUPPORTED_COMPONENTS (Optional) - list of supported components
+* Usage:
+   * generate_package_config(EXPORT NAMSPACE namespace) Install export targets with provided namespace
+   * generate_package_config(EXPORT) Install export targets with no namespace
+   * generate_package_config() Install cmake config files and not install export targets
+   * It exports the provided targets under the provided namespace ${ARG_COMPONENT}-targets, if EXPORT option is set
+   * It creates and install the ${ARG_CONFIG_NAME}-config.cmake
+   * In not component, it create and installs ${ARG_CONFIG_NAME}-config-version.cmake
+
 
 .. code-block:: cmake
 
-   # Install export targets with provided namespace
+   # Install and export targets with provided namespace
    generate_package_config(EXPORT NAMSPACE namespace)
 
-   #Install export targets with no namespace
+   #Install and export targets with no namespace
    generate_package_config(EXPORT)
 
    # Install CMake config files and not install export targets
    generate_package_config() Install CMake config files and not install export targets
 
-Additionally, ``DEPENDENCIES`` and ``CFG_EXTRAS`` are passed for generated CMake config files as with
-`configure_package`.
+   # Install and export targets for package with components
+   generate_package_config(EXPORT CONFIG_NAME ${PROJECT_NAME} SUPPORTED_COMPONENTS componentA componentB)
+
+   # Install and export targets for component
+   generate_package_config(EXPORT
+     COMPONENT kdl
+     NAMESPACE namespace
+     DEPENDENCIES packageA packageB
+     CFG_EXTRAS extraA.cmake extraB.cmake)
+
+Additionally, ``DEPENDENCIES``, ``CFG_EXTRAS`` and ``SUPPORTED_COMPONENTS`` are passed for generated CMake config files.
 
 Install Ament Hooks
 ^^^^^^^^^^^^^^^^^^^
@@ -380,6 +711,18 @@ To add coverage targets, such as calling `make ccov` to generate the actual cove
 
 .. note:: Each of the macros can take an ENABLE ON/OFF so they can easily be enabled by an external flag. If not provided it is automatically enabled.
 
+Exclude Code From Code Coverage
+-------------------------------
+
+================== ===========
+Keyword             Description
+================== ===========
+LCOV_EXCL_LINE     Lines containing this marker will be excluded.
+LCOV_EXCL_START    Marks the beginning of an excluded section. The current line is part of this section.
+LCOV_EXCL_STOP     Marks the end of an excluded section. The current line not part of this section.
+================== ===========
+
+.. note:: You can replace LCOV above with GCOV or GCOVR.
 
 Example 1: All targets instrumented
 -----------------------------------
@@ -424,3 +767,18 @@ Example 3: Target added to the 'ccov' and 'ccov-all' targets
    add_code_coverage_all_targets(EXCLUDE test/*) # Adds the 'ccov-all' target set and sets it to exclude all files in test/ folders.
    add_executable(theExe main.cpp non_covered.cpp)
    target_code_coverage(theExe AUTO ALL EXCLUDE non_covered.cpp test/*) # As an executable target, adds to the 'ccov' and ccov-all' targets, and the reports will exclude the non-covered.cpp file, and any files in a test/ folder.
+
+Example 4: ROS add_rostest_gtest usage
+------------------------------------------------------------
+
+.. code-block:: cmake
+
+   add_rostest_gtest(test_node test/test_node.test test/test_node.cpp)
+   target_include_directories(test_node SYSTEM PUBLIC {catkin_INCLUDE_DIRS})
+   target_link_libraries(test_node ${catkin_LIBRARIES})
+   target_code_coverage(
+     test_node
+     ALL
+     RUN_COMMAND rostest test_node test_node.test
+     EXCLUDE ${COVERAGE_EXCLUDE}
+     ENABLE ${ENABLE_CODE_COVERAGE})

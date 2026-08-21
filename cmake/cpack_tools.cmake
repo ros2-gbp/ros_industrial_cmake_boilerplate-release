@@ -250,8 +250,14 @@ macro(cpack_component)
             PACKAGE_NAME
             ${PROJECT_NAME})
 
-  string(TOUPPER ${ARG_COMPONENT} COMPONENT_UPPER)
-  string(TOLOWER ${ARG_COMPONENT} COMPONENT_LOWER)
+  string(
+    REPLACE "_"
+            "-"
+            COMPONENT_NAME
+            ${ARG_COMPONENT})
+
+  string(TOUPPER ${ARG_COMPONENT} COMPONENT_UPPER) # Must be upper case and underscore version for cmake variables
+  string(TOLOWER ${COMPONENT_NAME} COMPONENT_LOWER) # Must be lower case and dashed version for package file naming
 
   if(UNIX)
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")

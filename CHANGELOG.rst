@@ -2,6 +2,63 @@
 Changelog for package ros_industrial_cmake_boilerplate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.5 (2026-08-21)
+------------------
+* package.xml: fix the license string to correct SPDX format
+* Contributors: Jan Vermaete
+
+0.7.4 (2025-07-25)
+------------------
+* fix cmake deprecation, cmake version < then 3.10 is deprecated
+* Update package_debian.yml
+* Contributors: Levi Armstrong, mosfet80
+
+0.7.3 (2025-02-11)
+------------------
+* Expose ability to set clang-tidy versions
+* Contributors: Levi Armstrong
+
+0.7.2 (2025-01-21)
+------------------
+* Fix bug in cpack_component cmake variable naming
+* Contributors: Levi Armstrong
+
+0.7.1 (2025-01-14)
+------------------
+* Add script to run cpack
+* Fix debian cpack pipeline (`#100 <https://github.com/ros-industrial/ros_industrial_cmake_boilerplate/issues/100>`_)
+* Contributors: Levi Armstrong
+
+0.7.0 (2025-01-11)
+------------------
+* Replace underscores with dashes in component names for CPack
+* Contributors: Michael Ripperger
+
+0.6.3 (2024-12-03)
+------------------
+* Update install_targets to leverage cmake install dir variables so they may be overriden
+* Contributors: Levi Armstrong
+
+0.6.2 (2024-07-18)
+------------------
+* Fix issue where executables were being added to package libraries cmake variable
+* Contributors: Levi Armstrong
+
+0.6.1 (2024-06-21)
+------------------
+* Add sanitizer tools (`#96 <https://github.com/ros-industrial/ros_industrial_cmake_boilerplate/issues/96>`_)
+* Move individual tools to there own files
+* Contributors: Levi Armstrong
+
+0.6.0 (2024-06-10)
+------------------
+* Add catkin required variables _INCULDE_DIRS and _LIBRARIES
+* Update package_debian.yml
+* Update libraries into  package_nuget.yml
+  updated actions/checkout
+  updated ilammy/msvc-dev-cmd
+* Contributors: Levi Armstrong, mosfet80
+
 0.5.4 (2023-09-20)
 ------------------
 * Fixed error message when extracting maintainer information

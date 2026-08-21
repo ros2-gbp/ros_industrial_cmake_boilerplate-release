@@ -20,177 +20,6 @@ if(WIN32 AND NOT DEFINED CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
-set(DEFAULT_CPPCHECK_ARGS "--enable=warning,performance,portability,missingInclude;--template=\"[{severity}][{id}] {message} {callstack} \(On {file}:{line}\)\";--suppress=missingIncludeSystem;--quiet;--verbose;--force;--inline-suppr")
-mark_as_advanced(DEFAULT_CPPCHECK_ARGS)
-
-set(DEFAULT_IWYU_ARGS "-Xiwyu;any;-Xiwyu;iwyu;-Xiwyu;args")
-mark_as_advanced(DEFAULT_IWYU_ARGS)
-
-set(DEFAULT_CLANG_TIDY_CHECKS
-  "-*, \
-  bugprone-*, \
-  cppcoreguidelines-avoid-goto, \
-  cppcoreguidelines-c-copy-assignment-signature, \
-  cppcoreguidelines-interfaces-global-init, \
-  cppcoreguidelines-narrowing-conversions, \
-  cppcoreguidelines-no-malloc, \
-  cppcoreguidelines-slicing, \
-  cppcoreguidelines-special-member-functions, \
-  misc-*, \
-  -misc-non-private-member-variables-in-classes, \
-  modernize-*, \
-  -modernize-use-trailing-return-type, \
-  -modernize-use-nodiscard, \
-  performance-*, \
-  readability-avoid-const-params-in-decls, \
-  readability-container-size-empty, \
-  readability-delete-null-pointer, \
-  readability-deleted-default, \
-  readability-else-after-return, \
-  readability-function-size, \
-  readability-identifier-naming, \
-  readability-inconsistent-declaration-parameter-name, \
-  readability-misleading-indentation, \
-  readability-misplaced-array-index, \
-  readability-non-const-parameter, \
-  readability-redundant-*, \
-  readability-simplify-*, \
-  readability-static-*, \
-  readability-string-compare, \
-  readability-uniqueptr-delete-release, \
-  readability-rary-objects")
-mark_as_advanced(DEFAULT_CLANG_TIDY_CHECKS)
-
-# Adds clang-tidy checks to the target, with the given arguments being used
-# as the options set.
-macro(target_clang_tidy target)
-  set(oneValueArgs ENABLE WARNINGS_AS_ERRORS HEADER_FILTER LINE_FILTER CHECKS CONFIG ERROR_CHECKS)
-  set(multiValueArgs ARGUMENTS)
-  cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  if((NOT DEFINED ARG_ENABLE) OR (ARG_ENABLE))
-    if(CLANG_TIDY_EXE)
-      get_target_property(${target}_type ${target} TYPE)
-      if(NOT ${${target}_type} STREQUAL "INTERFACE_LIBRARY")
-        set(CLANG_TIDY_ARGUMENTS_FULL "")
-
-        if(ARG_HEADER_FILTER)
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "--header-filter=${ARG_HEADER_FILTER}")
-        else()
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "--header-filter=.*")
-        endif()
-
-        if(ARG_LINE_FILTER)
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "-line-filter=${ARG_LINE_FILTER}")
-        endif()
-
-        if(ARG_CHECKS)
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "--checks=${ARG_CHECKS}")
-        endif()
-
-        if(ARG_ERROR_CHECKS)
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "--warnings-as-errors=${ARG_ERROR_CHECKS}")
-        elseif((ARG_WARNINGS_AS_ERRORS) AND (ARG_CHECKS))
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "--warnings-as-errors=${ARG_CHECKS}")
-        endif()
-
-        if(ARG_CONFIG)
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "--config=${ARG_CONFIG}")
-        endif()
-
-        if(ARG_ARGUMENTS)
-          list(APPEND CLANG_TIDY_ARGUMENTS_FULL "${ARG_ARGUMENTS}")
-        endif()
-
-        if(ARG_ARGUMENTS)
-          set_target_properties("${target}" PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE};${ARG_ARGUMENTS}")
-        else()
-          set_target_properties("${target}" PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
-        endif()
-      endif()
-    else()
-      message(WARNING "Using target_clang_tidy but clang tidy executable was not found!")
-    endif()
-  endif()
-endmacro()
-
-# Adds include_what_you_use to the target, with the given arguments being
-# used as the options set.
-macro(target_include_what_you_use target)
-  set(oneValueArgs ENABLE)
-  set(multiValueArgs ARGUMENTS)
-  cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  if((NOT DEFINED ARG_ENABLE) OR (ARG_ENABLE))
-    if(IWYU_EXE)
-      if(ARG_ARGUMENTS)
-        set_target_properties("${target}" PROPERTIES CXX_INCLUDE_WHAT_YOU_USE "${IWYU_EXE};${ARG_ARGUMENTS}")
-      else()
-        set_target_properties("${target}" PROPERTIES CXX_INCLUDE_WHAT_YOU_USE "${IWYU_EXE};${DEFAULT_IWYU_ARGS}")
-      endif()
-    else()
-      message(WARNING "Using target_include_what_you_use but iwyu executable was not found!")
-    endif()
-  endif()
-endmacro()
-
-# Adds include_what_you_use to all targets, with the given arguments being used as the options set.
-macro(include_what_you_use)
-  set(oneValueArgs ENABLE)
-  set(multiValueArgs ARGUMENTS)
-  cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  if((NOT DEFINED ARG_ENABLE) OR (ARG_ENABLE))
-    if(IWYU_EXE)
-      if(ARG_ARGUMENTS)
-        set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "${IWYU_EXE};${ARG_ARGUMENTS}")
-      else()
-        set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "${IWYU_EXE};${DEFAULT_IWYU_ARGS}")
-      endif()
-    else()
-      message(WARNING "Using include_what_you_use but iwyu executable was not found!")
-    endif()
-  endif()
-endmacro()
-
-# Adds cppcheck to the target, with the given arguments being used as the options set.
-macro(target_cppcheck target)
-  set(oneValueArgs ENABLE)
-  set(multiValueArgs ARGUMENTS)
-  cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  if((NOT DEFINED ARG_ENABLE) OR (ARG_ENABLE))
-    if(CPPCHECK_EXE)
-      if(ARG_ARGUMENTS)
-        set_target_properties("${target}" PROPERTIES CXX_CPPCHECK "${CPPCHECK_EXE};${ARG_ARGUMENTS}")
-      else()
-        set_target_properties("${target}" PROPERTIES CXX_CPPCHECK "${CPPCHECK_EXE};${DEFAULT_CPPCHECK_ARGS}")
-      endif()
-    else()
-      message(WARNING "Using target_cppcheck but cppcheck executable was not found!")
-    endif()
-  endif()
-endmacro()
-
-# Adds cppcheck to all targets, with the given arguments being used as the options set.
-macro(cppcheck)
-  set(oneValueArgs ENABLE)
-  set(multiValueArgs ARGUMENTS)
-  cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  if((NOT DEFINED ARG_ENABLE) OR (ARG_ENABLE))
-    if(CPPCHECK_EXE)
-      if(ARG_ARGUMENTS)
-        set(CMAKE_CXX_CPPCHECK "${CPPCHECK_EXE};${ARG_ARGUMENTS}")
-      else()
-        set(CMAKE_CXX_CPPCHECK "${CPPCHECK_EXE};${DEFAULT_CPPCHECK_ARGS}")
-      endif()
-    else()
-      message(WARNING "Using cppcheck but cppcheck executable was not found!")
-    endif()
-  endif()
-endmacro()
-
 # Allows Colcon to find non-Ament packages when using workspace underlays
 macro(install_ament_hooks)
   set(oneValueArgs COMPONENT)
@@ -227,9 +56,9 @@ macro(install_targets)
   install(TARGETS ${ARG_TARGETS}
           EXPORT ${ARG_COMPONENT}-targets
           COMPONENT ${ARG_COMPONENT}
-          RUNTIME DESTINATION bin
-          LIBRARY DESTINATION lib
-          ARCHIVE DESTINATION lib)
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endmacro()
 
 # Install the package.xml used for catkin and ament
@@ -246,8 +75,8 @@ endmacro()
 
 # Create a default *-config.cmake.in with simple dependency finding
 function(make_default_package_config)
-    set(oneValueArgs CONFIG_NAME CONFIG_FILE COMPONENT HAS_TARGETS )
-    set(multiValueArgs DEPENDENCIES CFG_EXTRAS SUPPORTED_COMPONENTS)
+    set(oneValueArgs CONFIG_NAME CONFIG_FILE COMPONENT NAMESPACE)
+    set(multiValueArgs TARGETS DEPENDENCIES CFG_EXTRAS SUPPORTED_COMPONENTS)
     cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (NOT ARG_COMPONENT)
@@ -262,13 +91,59 @@ function(make_default_package_config)
       string(CONCAT ricb_pkgconfig
           "# Default *-config.cmake file created by ros-industrial-cmake-boilerplate\n\n"
           "@PACKAGE_INIT@\n\n"
-          "set(@PROJECT_NAME@_FOUND ON)\n"
+          "set(@PROJECT_NAME@_FOUND ON)\n\n"
+          "# These variables are needed so catkin packages can be located. \n"
+          "if (EXISTS \"@PACKAGE_PREFIX_DIR@/include\")\n"
+          "  set(@PROJECT_NAME@_INCLUDE_DIRS \"@PACKAGE_PREFIX_DIR@/include\")\n"
+          "else()\n"
+          "  set(@PROJECT_NAME@_INCLUDE_DIRS)\n"
+          "endif()\n"
+          "set(@PROJECT_NAME@_LIBRARIES)\n"
       )
+
+      if (ARG_TARGETS)
+        string(APPEND ricb_pkgconfig "\n# Targets\n")
+        if (ARG_NAMESPACE)
+          foreach(_target IN LISTS ARG_TARGETS)
+            get_target_property(target_type ${_target} TYPE)
+            if (NOT target_type STREQUAL "EXECUTABLE")
+              string(APPEND ricb_pkgconfig "list(APPEND @PROJECT_NAME@_LIBRARIES ${ARG_NAMESPACE}::${_target})\n")
+            endif()
+          endforeach()
+        else()
+          foreach(_target IN LISTS ARG_TARGETS)
+            get_target_property(target_type ${_target} TYPE)
+            if (NOT target_type STREQUAL "EXECUTABLE")
+              string(APPEND ricb_pkgconfig "list(APPEND @PROJECT_NAME@_LIBRARIES ${_target})\n")
+            endif()
+          endforeach()
+        endif()
+      endif()
     else()
       string(CONCAT ricb_pkgconfig
           "# Default *-config.cmake file created by ros-industrial-cmake-boilerplate\n\n"
           "set(@PROJECT_NAME@_${ARG_COMPONENT}_FOUND ON)\n"
+          "set(@PROJECT_NAME@_${ARG_COMPONENT}_LIBRARIES)\n"
       )
+
+      if (ARG_TARGETS)
+        string(APPEND ricb_pkgconfig "\n# Targets\n")
+        if (ARG_NAMESPACE)
+          foreach(_target IN LISTS ARG_TARGETS)
+            get_target_property(target_type ${_target} TYPE)
+            if (NOT target_type STREQUAL "EXECUTABLE")
+              string(APPEND ricb_pkgconfig "list(APPEND @PROJECT_NAME@_${ARG_COMPONENT}_LIBRARIES ${ARG_NAMESPACE}::${_target})\n")
+            endif()
+          endforeach()
+        else()
+          foreach(_target IN LISTS ARG_TARGETS)
+            get_target_property(target_type ${_target} TYPE)
+            if (NOT target_type STREQUAL "EXECUTABLE")
+              string(APPEND ricb_pkgconfig "list(APPEND @PROJECT_NAME@_${ARG_COMPONENT}_LIBRARIES ${_target})\n")
+            endif()
+          endforeach()
+        endif()
+      endif()
     endif()
 
     if (ARG_DEPENDENCIES)
@@ -289,6 +164,10 @@ function(make_default_package_config)
         "if (NOT @PROJECT_NAME@_FIND_COMPONENTS)\n"
         "  foreach(component \${@PROJECT_NAME@_SUPPORTED_COMPONENTS})\n"
         "    include(\${CMAKE_CURRENT_LIST_DIR}/\${component}-config.cmake)\n"
+        "  endforeach()\n\n"
+        "  set(@PROJECT_NAME@_LIBRARIES)\n"
+        "  foreach(component \${@PROJECT_NAME@_SUPPORTED_COMPONENTS})\n"
+        "    list(APPEND @PROJECT_NAME@_LIBRARIES \${@PROJECT_NAME@_\${component}_LIBRARIES})\n"
         "  endforeach()\n"
         "else()\n"
         "  foreach(component \${@PROJECT_NAME@_FIND_COMPONENTS})\n"
@@ -300,6 +179,12 @@ function(make_default_package_config)
         "      endif()\n"
         "    else()\n"
         "      include(\${CMAKE_CURRENT_LIST_DIR}/\${component}-config.cmake)\n"
+        "    endif()\n"
+        "  endforeach()\n\n"
+        "  set(@PROJECT_NAME@_LIBRARIES)\n"
+        "  foreach(component \${@PROJECT_NAME@_FIND_COMPONENTS})\n"
+        "    if(component IN_LIST @PROJECT_NAME@_SUPPORTED_COMPONENTS)\n"
+        "      list(APPEND @PROJECT_NAME@_LIBRARIES \${@PROJECT_NAME@_\${component}_LIBRARIES})\n"
         "    endif()\n"
         "  endforeach()\n"
         "endif()\n\n"
@@ -314,7 +199,7 @@ function(make_default_package_config)
         endforeach()
     endif()
 
-    if (ARG_HAS_TARGETS)
+    if (ARG_TARGETS)
         string(APPEND ricb_pkgconfig "\n# Targets\n"
              "include(\"\${CMAKE_CURRENT_LIST_DIR}/${ARG_COMPONENT}-targets.cmake\")\n")
     endif()
@@ -331,6 +216,7 @@ endfunction()
 #    * CONFIG_NAME (Optional) - the name given to the export ${ARG_COMPONENT}-config.cmake, if not provided COMPONENT is used
 #    * NAMESPACE (Optional)   - the namespace assigned for exported targets
 # Multi Value Args:
+#    * TARGETS                         - The targets from the project to be installed
 #    * DEPENDENCIES (Optional)         - list of dependencies to be loaded in the package config
 #    * CFG_EXTRAS (Optional)           - list of extra cmake config files to be loaded in package config
 #    * SUPPORTED_COMPONENTS (Optional) - list of supported components
@@ -344,7 +230,7 @@ endfunction()
 function(generate_package_config)
   set(options EXPORT)
   set(oneValueArgs CONFIG_NAME COMPONENT NAMESPACE)
-  set(multiValueArgs DEPENDENCIES CFG_EXTRAS SUPPORTED_COMPONENTS)
+  set(multiValueArgs TARGETS DEPENDENCIES CFG_EXTRAS SUPPORTED_COMPONENTS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if (NOT ARG_COMPONENT)
@@ -369,11 +255,12 @@ function(generate_package_config)
     set(config_template "${CMAKE_BINARY_DIR}/${ARG_CONFIG_NAME}-config.cmake.in")
 
     make_default_package_config(
+      NAMESPACE ${ARG_NAMESPACE}
       CONFIG_NAME ${ARG_CONFIG_NAME}
       CONFIG_FILE ${config_template}
       COMPONENT ${ARG_COMPONENT}
       SUPPORTED_COMPONENTS ${ARG_SUPPORTED_COMPONENTS}
-      HAS_TARGETS ${ARG_EXPORT}
+      TARGETS ${ARG_TARGETS}
       DEPENDENCIES ${ARG_DEPENDENCIES}
       CFG_EXTRAS ${ARG_CFG_EXTRAS})
 
@@ -428,6 +315,8 @@ endfunction()
 
 # Performs multiple operation so other packages may find a package
 # If Namespace is provided but no targets it is assumed targets were installed and must be exported
+# Options:
+#    * SKIP_INSTALL_TARGETS - Indicate that targets are manualy installed.
 # One Value Args:
 #   * NAMESPACE - This will prepend <namespace>:: to the target names as they are written to the import file
 #   * COMPONENT - The component to associate with package related files like package.xml, *-config.cmake, etc.. If not provided the PROJECT_NAME is used.
@@ -442,9 +331,10 @@ endfunction()
 #   * It installs the package.xml file
 #   * It create and install the ${PROJECT_NAME}-config.cmake and ${PROJECT_NAME}-config-version.cmake
 macro(configure_package)
+  set(options SKIP_INSTALL_TARGETS)
   set(oneValueArgs NAMESPACE COMPONENT)
   set(multiValueArgs TARGETS DEPENDENCIES CFG_EXTRAS SUPPORTED_COMPONENTS)
-  cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if (NOT ARG_COMPONENT)
     set(ARG_COMPONENT ${PROJECT_NAME})
@@ -455,12 +345,15 @@ macro(configure_package)
 
   # install and export targets if provided and generate package config
   if (ARG_TARGETS)
-    install_targets(COMPONENT ${ARG_COMPONENT} TARGETS ${ARG_TARGETS})
+    if (NOT ARG_SKIP_INSTALL_TARGETS)
+      install_targets(COMPONENT ${ARG_COMPONENT} TARGETS ${ARG_TARGETS})
+    endif()
     generate_package_config(EXPORT
       CONFIG_NAME ${PROJECT_NAME}
       COMPONENT ${ARG_COMPONENT}
       SUPPORTED_COMPONENTS ${ARG_SUPPORTED_COMPONENTS}
       NAMESPACE ${ARG_NAMESPACE}
+      TARGETS ${ARG_TARGETS}
       DEPENDENCIES ${ARG_DEPENDENCIES}
       CFG_EXTRAS ${ARG_CFG_EXTRAS})
   elseif(ARG_NAMESPACE)
@@ -485,6 +378,8 @@ endmacro()
 
 # Performs multiple operation so other packages may find a package's component
 # If Namespace is provided but no targets it is assumed targets were installed and must be exported
+# Options:
+#    * SKIP_INSTALL_TARGETS - Indicate that targets are manualy installed.
 # One Value Args:
 #   * NAMESPACE - This will prepend <namespace>:: to the target names as they are written to the import file
 #   * COMPONENT - The component name
@@ -496,9 +391,10 @@ endmacro()
 #   * It installs the provided targets
 #   * It exports the provided targets under the provided namespace
 macro(configure_component)
+  set(options SKIP_INSTALL_TARGETS)
   set(oneValueArgs COMPONENT NAMESPACE)
   set(multiValueArgs TARGETS DEPENDENCIES CFG_EXTRAS)
-  cmake_parse_arguments(ARG "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   if (NOT ARG_COMPONENT)
     message(FATAL_ERROR "configure_component is missing COMPONENT entry")
@@ -506,10 +402,13 @@ macro(configure_component)
 
   # install and export targets if provided and generate package config
   if (ARG_TARGETS)
-    install_targets(COMPONENT ${ARG_COMPONENT} TARGETS ${ARG_TARGETS})
+    if (NOT ARG_SKIP_INSTALL_TARGETS)
+      install_targets(COMPONENT ${ARG_COMPONENT} TARGETS ${ARG_TARGETS})
+    endif()
     generate_package_config(EXPORT
       COMPONENT ${ARG_COMPONENT}
       NAMESPACE ${ARG_NAMESPACE}
+      TARGETS ${ARG_TARGETS}
       DEPENDENCIES ${ARG_DEPENDENCIES}
       CFG_EXTRAS ${ARG_CFG_EXTRAS})
   elseif(ARG_NAMESPACE)
@@ -524,7 +423,6 @@ macro(configure_component)
       DEPENDENCIES ${ARG_DEPENDENCIES}
       CFG_EXTRAS ${ARG_CFG_EXTRAS})
   endif()
-
 endmacro()
 
 # This macro call find_package(GTest REQUIRED) and check for targets GTest::GTest and GTest::Main and if missign it will create them
@@ -658,31 +556,3 @@ macro(target_cxx_version target)
     message(FATAL_ERROR "target_cxx_version: Must provide keyword INTERFACE | PRIVATE | PUBLIC")
   endif()
 endmacro()
-
-# Find relevant programs
-find_program(CLANG_TIDY_EXE NAMES clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy-10 clang-tidy-9 clang-tidy-8 clang-tidy)
-mark_as_advanced(FORCE CLANG_TIDY_EXE)
-if(CLANG_TIDY_EXE)
-  message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-else()
-  message(STATUS "clang-tidy not found!")
-  set(CMAKE_CXX_CLANG_TIDY "" CACHE STRING "" FORCE) # delete it
-endif()
-
-find_program(IWYU_EXE NAMES "include-what-you-use")
-mark_as_advanced(FORCE IWYU_EXE)
-if(IWYU_EXE)
-  message(STATUS "include-what-you-use found: ${IWYU_EXE}")
-else()
-  message(STATUS "include-what-you-use not found!")
-  set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "" CACHE STRING "" FORCE) # delete it
-endif()
-
-find_program(CPPCHECK_EXE NAMES "cppcheck")
-mark_as_advanced(FORCE CPPCHECK_EXE)
-if(CPPCHECK_EXE)
-  message(STATUS "cppcheck found: ${CPPCHECK_EXE}")
-else()
-  message(STATUS "cppcheck not found!")
-  set(CMAKE_CXX_CPPCHECK "" CACHE STRING "" FORCE) # delete it
-endif()

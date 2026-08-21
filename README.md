@@ -1,3 +1,26 @@
+## ros_industrial_cmake_boilerplate (kilted) - 0.7.5-1
+
+The packages in the `ros_industrial_cmake_boilerplate` repository were released into the `kilted` distro by running `/usr/bin/bloom-release ros_industrial_cmake_boilerplate --rosdistro kilted --track kilted` on `Fri, 21 Aug 2026 16:08:36 -0000`
+
+The `ros_industrial_cmake_boilerplate` package was released.
+
+Version of package(s) in repository `ros_industrial_cmake_boilerplate`:
+
+- upstream repository: https://github.com/ros-industrial/ros_industrial_cmake_boilerplate.git
+- release repository: https://github.com/ros2-gbp/ros_industrial_cmake_boilerplate-release.git
+- rosdistro version: `0.5.4-2`
+- old version: `0.5.4-2`
+- new version: `0.7.5-1`
+
+Versions of tools used:
+
+- bloom version: `0.14.3`
+- catkin_pkg version: `1.1.0`
+- rosdep version: `0.26.0`
+- rosdistro version: `1.0.1`
+- vcstools version: `0.1.42`
+
+
 ## ros_industrial_cmake_boilerplate (lyrical) - 0.7.5-1
 
 The packages in the `ros_industrial_cmake_boilerplate` repository were released into the `lyrical` distro by running `/usr/bin/bloom-release ros_industrial_cmake_boilerplate --rosdistro lyrical --track lyrical` on `Fri, 21 Aug 2026 16:04:38 -0000`
